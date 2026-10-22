@@ -1,6 +1,7 @@
 package fr.bibliotheque.controller;
 
 import fr.bibliotheque.dto.AddLibraryBookRequest;
+import fr.bibliotheque.dto.UpdateStatusRequest;
 import fr.bibliotheque.model.LibraryBook;
 import fr.bibliotheque.model.ReadingStatus;
 import fr.bibliotheque.model.User;
@@ -9,6 +10,8 @@ import fr.bibliotheque.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -133,6 +136,53 @@ public class LibraryController {
             response.add(item);
         }
 
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<?> updateStatus(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable Long id,
+            @RequestBody UpdateStatusRequest request) {
+
+        if (userRepository.findById(userId).isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "Utilisateur introuvable."));
+        }
+
+        LibraryBook book = libraryBookRepository.findByIdAndUserId(id, userId).orElse(null);
+        if (book == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "Livre introuvable."));
+        }
+
+        if (request.getStatus() == null || request.getStatus().isBlank()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Le statut est obligatoire."));
+        }
+
+        try {
+            book.setStatus(ReadingStatus.valueOf(request.getStatus().trim()));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Statut invalide. Utilisez A_LIRE, EN_COURS ou LU."));
+        }
+
+        if (request.getRating() != null) {
+            book.setRating(request.getRating());
+        }
+        if (request.getComment() != null) {
+            book.setComment(request.getComment());
+        }
+
+        LibraryBook saved = libraryBookRepository.save(book);
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("id", saved.getId());
+        response.put("title", saved.getTitle());
+        response.put("status", saved.getStatus().name());
+        response.put("rating", saved.getRating());
+        response.put("comment", saved.getComment());
         return ResponseEntity.ok(response);
     }
 }
