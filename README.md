@@ -1,41 +1,51 @@
-# Bibliotheque — Spring Boot
 
-Application Spring Boot pour rechercher des livres via l'API publique Open Library.
+# 📚 Bibliothèque
 
-## Endpoints
+Application web développée avec **Java et Spring Boot**, permettant de rechercher des livres grâce à l’API publique Open Library.
 
-- `GET /api/books/search?q=harry%20potter` — recherche jusqu'à 10 livres.
-- `GET /api/books/OL82563W` — détails d'une œuvre Open Library (identifiant de type `OL...W`).
-- `GET /api/books/OL...M` — détails d'une édition (identifiant de type `OL...M`).
+## 🎯 Objectif
 
-Le service renvoie le JSON fourni par Open Library. Les identifiants utilisés dans `/api/books/{id}` sont les identifiants courts Open Library sans le préfixe `/works/` ou `/books/`.
+L’objectif du projet est de créer une application facilitant la recherche et la consultation d’informations sur des livres, à travers une API REST et une interface web intuitive.
 
-## Prérequis
+## ⚙️ Fonctionnalités
+
+- Recherche de livres par titre ou auteur.
+- Consultation des détails d’un livre.
+- Récupération des données depuis Open Library au format JSON.
+- Affichage des résultats dans une interface web.
+- Présentation des titres, auteurs, années de publication et couvertures disponibles.
+
+## 🛠️ Technologies
 
 - Java 21
+- Spring Boot
+- Spring Web MVC
+- RestClient
 - Maven
+- HTML, CSS et JavaScript
+- API REST Open Library
 
-L'application utilise Spring Boot Web MVC et appelle directement `https://openlibrary.org`.
+## 🚀 Lancement du projet
 
-## Lancer l'application
+Prérequis : JDK 21 et une connexion Internet.
 
-Depuis la racine du projet :
+Sous Windows, exécuter à la racine du projet :
 
-```bash
-./mvnw spring-boot:run
+```powershell
+.\mvnw.cmd spring-boot:run
 ```
 
-Sous Windows :
+Puis ouvrir l’application :
 
-```cmd
-mvnw.cmd spring-boot:run
-```
+http://localhost:8080/
 
-## Tester
+## 👥 Organisation
 
-Une fois l'application démarrée :
+Le projet est réparti en deux parties :
 
-- Recherche : `http://localhost:8080/api/books/search?q=harry%20potter`
-- Détails d'une œuvre : `http://localhost:8080/api/books/OL82563W`
+- **Personne 1 — Recherche de livres :** intégration de l’API Open Library et récupération des informations sur les livres.
+- **Personne 2 — Bibliothèque personnelle :** gestion des livres enregistrés et de leur statut de lecture.
 
-Une connexion Internet est nécessaire pour interroger Open Library.
+---
+
+*Projet réalisé dans le cadre d’un développement d’application web avec Spring Boot et une API REST.*
