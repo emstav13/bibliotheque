@@ -1,6 +1,7 @@
+
 package fr.bibliotheque.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -9,15 +10,17 @@ public class OpenLibraryService {
 
     private final RestClient restClient;
 
-    public OpenLibraryService(RestClient.Builder restClientBuilder) {
-        this.restClient = restClientBuilder
+    public OpenLibraryService() {
+        this.restClient = RestClient.builder()
                 .baseUrl("https://openlibrary.org")
                 .build();
     }
 
     public JsonNode searchBooks(String query) {
         if (query == null || query.isBlank()) {
-            throw new IllegalArgumentException("Le paramètre q est obligatoire.");
+            throw new IllegalArgumentException(
+                    "Le paramètre q est obligatoire."
+            );
         }
 
         return restClient.get()
@@ -30,12 +33,11 @@ public class OpenLibraryService {
                 .body(JsonNode.class);
     }
 
-    /**
-     * Accepts a work ID (OL...W) or an edition ID (OL...M).
-     */
     public JsonNode getBookDetails(String id) {
         if (id == null || id.isBlank()) {
-            throw new IllegalArgumentException("L'identifiant du livre est obligatoire.");
+            throw new IllegalArgumentException(
+                    "L'identifiant du livre est obligatoire."
+            );
         }
 
         String normalizedId = id.trim();

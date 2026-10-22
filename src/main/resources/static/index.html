@@ -1,0 +1,232 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ma Bibliothèque</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6fb;
+            color: #20243a;
+        }
+
+        header {
+            background: #283593;
+            color: white;
+            padding: 28px 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0 0 8px;
+        }
+
+        main {
+            max-width: 1100px;
+            margin: 35px auto;
+            padding: 0 20px;
+        }
+
+        .search {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        input {
+            flex: 1;
+            min-width: 0;
+            padding: 14px;
+            border: 1px solid #ccd1e0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        button {
+            border: none;
+            border-radius: 8px;
+            padding: 14px 22px;
+            background: #283593;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background: #3949ab;
+        }
+
+        #message {
+            color: #555;
+            margin: 15px 0;
+        }
+
+        #results {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            gap: 20px;
+        }
+
+        .book {
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px #0000000d;
+        }
+
+        .book img {
+            width: 100%;
+            height: 220px;
+            object-fit: contain;
+            margin-bottom: 12px;
+        }
+
+        .book h3 {
+            font-size: 17px;
+            margin: 5px 0 10px;
+        }
+
+        .book p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .details {
+            display: inline-block;
+            margin-top: 8px;
+            color: #283593;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        @media (max-width: 500px) {
+            .search {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<header>
+    <h1>📚 Ma Bibliothèque</h1>
+    <p>Découvrez votre prochain livre préféré</p>
+</header>
+
+<main>
+    <form class="search" id="searchForm">
+        <input
+                id="query"
+                type="search"
+                placeholder="Titre, auteur, livre..."
+                value="Harry Potter"
+                required
+        >
+        <button type="submit">Rechercher</button>
+    </form>
+
+    <p id="message">Recherchez un livre pour commencer.</p>
+    <section id="results"></section>
+</main>
+
+<script>
+    const form = document.getElementById("searchForm");
+    const queryInput = document.getElementById("query");
+    const results = document.getElementById("results");
+    const message = document.getElementById("message");
+
+    form.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const query = queryInput.value.trim();
+
+        if (!query) {
+            message.textContent = "Veuillez saisir un titre ou un auteur.";
+            return;
+        }
+
+        results.replaceChildren();
+        message.textContent = "Recherche en cours...";
+
+        try {
+            const response = await fetch(
+                "/api/books/search?q=" + encodeURIComponent(query)
+            );
+
+            if (!response.ok) {
+                throw new Error("Erreur HTTP : " + response.status);
+            }
+
+            const data = await response.json();
+            const books = data.docs || [];
+
+            if (books.length === 0) {
+                message.textContent = "Aucun livre trouvé.";
+                return;
+            }
+
+            message.textContent = books.length + " livres trouvés.";
+
+            books.forEach(function (book) {
+                const card = document.createElement("article");
+                card.className = "book";
+
+                const image = document.createElement("img");
+                image.alt = "Couverture de " + (book.title || "livre");
+                image.loading = "lazy";
+
+                if (book.cover_i) {
+                    image.src =
+                        "https://covers.openlibrary.org/b/id/" +
+                        book.cover_i + "-M.jpg";
+                } else {
+                    image.alt = "Couverture indisponible";
+                    image.hidden = true;
+                }
+
+                const title = document.createElement("h3");
+                title.textContent = book.title || "Titre inconnu";
+
+                const author = document.createElement("p");
+                author.textContent =
+                    "Auteur : " +
+                    (book.author_name?.slice(0, 2).join(", ") || "Inconnu");
+
+                const year = document.createElement("p");
+                year.textContent =
+                    "Première publication : " +
+                    (book.first_publish_year || "Inconnue");
+
+                card.append(image, title, author, year);
+
+                if (book.key) {
+                    const link = document.createElement("a");
+                    link.className = "details";
+                    link.href = "https://openlibrary.org" + book.key;
+                    link.target = "_blank";
+                    link.rel = "noopener noreferrer";
+                    link.textContent = "Voir le livre ↗";
+                    card.appendChild(link);
+                }
+
+                results.appendChild(card);
+            });
+        } catch (error) {
+            message.textContent =
+                "Impossible de charger les livres. Vérifiez que le backend fonctionne.";
+            console.error(error);
+        }
+    });
+
+    form.requestSubmit();
+</script>
+</body>
+</html>
