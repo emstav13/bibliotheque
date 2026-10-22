@@ -5,6 +5,7 @@ import fr.bibliotheque.model.ReadingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface LibraryBookRepository extends JpaRepository<LibraryBook, Long> {
 
@@ -13,4 +14,6 @@ public interface LibraryBookRepository extends JpaRepository<LibraryBook, Long> 
     List<LibraryBook> findByUserId(Long userId);
 
     List<LibraryBook> findByUserIdAndStatus(Long userId, ReadingStatus status);
+
+    Optional<LibraryBook> findByIdAndUserId(Long id, Long userId);
 }
