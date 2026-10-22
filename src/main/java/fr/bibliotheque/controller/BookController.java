@@ -1,6 +1,6 @@
 package fr.bibliotheque.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import fr.bibliotheque.service.OpenLibraryService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
