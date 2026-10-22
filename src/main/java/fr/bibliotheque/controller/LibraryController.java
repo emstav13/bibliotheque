@@ -8,12 +8,18 @@ import fr.bibliotheque.repository.LibraryBookRepository;
 import fr.bibliotheque.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -80,5 +86,53 @@ public class LibraryController {
                 "title", saved.getTitle(),
                 "status", saved.getStatus().name()
         ));
+    }
+
+    @GetMapping
+    public ResponseEntity<?> listBooks(
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String sort) {
+
+        if (userRepository.findById(userId).isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "Utilisateur introuvable."));
+        }
+
+        List<LibraryBook> books;
+        if (status == null || status.isBlank()) {
+            books = libraryBookRepository.findByUserId(userId);
+        } else {
+            try {
+                ReadingStatus readingStatus = ReadingStatus.valueOf(status.trim());
+                books = libraryBookRepository.findByUserIdAndStatus(userId, readingStatus);
+            } catch (IllegalArgumentException exception) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Statut invalide. Utilisez A_LIRE, EN_COURS ou LU."));
+            }
+        }
+
+        if ("title".equals(sort)) {
+            books.sort(Comparator.comparing(LibraryBook::getTitle, Comparator.nullsLast(String::compareToIgnoreCase)));
+        } else {
+            books.sort(Comparator.comparing(LibraryBook::getId).reversed());
+        }
+
+        List<Map<String, Object>> response = new ArrayList<>();
+        for (LibraryBook book : books) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("id", book.getId());
+            item.put("openLibraryId", book.getOpenLibraryId());
+            item.put("title", book.getTitle());
+            item.put("author", book.getAuthor());
+            item.put("coverUrl", book.getCoverUrl());
+            item.put("publishYear", book.getPublishYear());
+            item.put("status", book.getStatus().name());
+            item.put("rating", book.getRating());
+            item.put("comment", book.getComment());
+            response.add(item);
+        }
+
+        return ResponseEntity.ok(response);
     }
 }
