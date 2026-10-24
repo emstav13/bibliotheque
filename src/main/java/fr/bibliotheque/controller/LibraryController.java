@@ -9,6 +9,7 @@ import fr.bibliotheque.repository.LibraryBookRepository;
 import fr.bibliotheque.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -184,5 +185,25 @@ public class LibraryController {
         response.put("rating", saved.getRating());
         response.put("comment", saved.getComment());
         return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteBook(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable Long id) {
+
+        if (userRepository.findById(userId).isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "Utilisateur introuvable."));
+        }
+
+        LibraryBook book = libraryBookRepository.findByIdAndUserId(id, userId).orElse(null);
+        if (book == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "Livre introuvable."));
+        }
+
+        libraryBookRepository.delete(book);
+        return ResponseEntity.noContent().build();
     }
 }
