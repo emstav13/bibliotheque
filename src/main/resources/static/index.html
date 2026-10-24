@@ -1,15 +1,11 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ma Bibliothèque</title>
-
     <style>
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             margin: 0;
@@ -25,53 +21,64 @@
             text-align: center;
         }
 
-        header h1 {
-            margin: 0 0 8px;
-        }
+        header h1 { margin: 0 0 8px; }
 
         main {
             max-width: 1100px;
             margin: 35px auto;
-            padding: 0 20px;
+            padding: 0 20px 40px;
         }
 
-        .search {
+        section.panel {
+            background: white;
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 24px;
+            box-shadow: 0 3px 12px #0000000d;
+        }
+
+        h2 { margin: 0 0 14px; font-size: 20px; }
+
+        form.row, .row {
             display: flex;
             gap: 10px;
-            margin-bottom: 25px;
+            flex-wrap: wrap;
+            align-items: center;
         }
 
-        input {
-            flex: 1;
-            min-width: 0;
-            padding: 14px;
-            border: 1px solid #ccd1e0;
+        input, select, textarea, button {
             border-radius: 8px;
             font-size: 16px;
         }
+
+        input, select, textarea {
+            padding: 12px;
+            border: 1px solid #ccd1e0;
+            background: white;
+            color: #20243a;
+        }
+
+        input[type="search"], input[type="text"], input[type="password"] { flex: 1; min-width: 160px; }
+
+        textarea { width: 100%; min-height: 70px; resize: vertical; }
 
         button {
             border: none;
-            border-radius: 8px;
-            padding: 14px 22px;
+            padding: 12px 18px;
             background: #283593;
             color: white;
             cursor: pointer;
-            font-size: 16px;
         }
 
-        button:hover {
-            background: #3949ab;
-        }
+        button.secondary { background: #5c6bc0; }
+        button.danger { background: #c62828; }
+        button:hover { filter: brightness(1.08); }
 
-        #message {
-            color: #555;
-            margin: 15px 0;
-        }
+        #accountStatus, .hint { color: #555; margin: 10px 0 0; }
 
-        #results {
+        #results, #library {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
             gap: 20px;
         }
 
@@ -89,15 +96,8 @@
             margin-bottom: 12px;
         }
 
-        .book h3 {
-            font-size: 17px;
-            margin: 5px 0 10px;
-        }
-
-        .book p {
-            color: #666;
-            font-size: 14px;
-        }
+        .book h3 { font-size: 17px; margin: 5px 0 10px; }
+        .book p { color: #666; font-size: 14px; margin: 4px 0; }
 
         .details {
             display: inline-block;
@@ -107,126 +107,386 @@
             font-weight: bold;
         }
 
+        .book button, .book select, .book input { width: 100%; margin-top: 8px; }
+
         @media (max-width: 500px) {
-            .search {
-                flex-direction: column;
-            }
+            .row { flex-direction: column; align-items: stretch; }
         }
     </style>
 </head>
-
 <body>
 <header>
-    <h1>📚 Ma Bibliothèque</h1>
-    <p>Découvrez votre prochain livre préféré</p>
+    <h1>Ma Bibliothèque</h1>
+    <p>Recherche Open Library et suivi de tes lectures</p>
 </header>
 
 <main>
-    <form class="search" id="searchForm">
-        <input
-                id="query"
-                type="search"
-                placeholder="Titre, auteur, livre..."
-                value="Harry Potter"
-                required
-        >
-        <button type="submit">Rechercher</button>
-    </form>
+    <section class="panel">
+        <h2>Compte</h2>
+        <form class="row" id="registerForm">
+            <input id="username" type="text" placeholder="Nom d'utilisateur" required>
+            <input id="password" type="password" placeholder="Mot de passe" required>
+            <button type="submit">S'inscrire</button>
+        </form>
+        <form class="row" id="existingUserForm">
+            <input id="existingUserId" type="number" min="1" placeholder="Id déjà créé">
+            <button class="secondary" type="submit">Utiliser cet id</button>
+        </form>
+        <p id="accountStatus">Inscris-toi pour enregistrer des livres. Il n'y a pas encore de connexion : l'id renvoyé sert pour la suite.</p>
+    </section>
 
-    <p id="message">Recherchez un livre pour commencer.</p>
-    <section id="results"></section>
+    <section class="panel">
+        <h2>Recherche</h2>
+        <form class="row" id="searchForm">
+            <input id="query" type="search" placeholder="Titre, auteur, ISBN..." value="Harry Potter" required>
+            <button type="submit">Rechercher</button>
+        </form>
+        <p id="message">Recherchez un livre pour commencer.</p>
+        <section id="results"></section>
+    </section>
+
+    <section class="panel">
+        <h2>Ma bibliothèque</h2>
+        <div class="row">
+            <select id="statusFilter">
+                <option value="">Tous les statuts</option>
+                <option value="A_LIRE">À lire</option>
+                <option value="EN_COURS">En cours</option>
+                <option value="LU">Lu</option>
+            </select>
+            <select id="sortFilter">
+                <option value="">Plus récents</option>
+                <option value="title">Titre</option>
+            </select>
+            <button class="secondary" id="refreshLibrary" type="button">Actualiser</button>
+        </div>
+        <p id="libraryMessage">Connecte un compte pour voir tes livres.</p>
+        <section id="library"></section>
+    </section>
 </main>
 
 <script>
-    const form = document.getElementById("searchForm");
-    const queryInput = document.getElementById("query");
-    const results = document.getElementById("results");
+    const STATUS_LABELS = { A_LIRE: "À lire", EN_COURS: "En cours", LU: "Lu" };
+    const accountStatus = document.getElementById("accountStatus");
     const message = document.getElementById("message");
+    const results = document.getElementById("results");
+    const library = document.getElementById("library");
+    const libraryMessage = document.getElementById("libraryMessage");
+    let currentUser = JSON.parse(sessionStorage.getItem("bibliothequeUser") || "null");
 
-    form.addEventListener("submit", async function (event) {
-        event.preventDefault();
-
-        const query = queryInput.value.trim();
-
-        if (!query) {
-            message.textContent = "Veuillez saisir un titre ou un auteur.";
+    function showAccount() {
+        if (!currentUser) {
+            accountStatus.textContent = "Inscris-toi pour enregistrer des livres. Il n'y a pas encore de connexion : l'id renvoyé sert pour la suite.";
             return;
         }
+        accountStatus.textContent = "Compte utilisé : " + currentUser.username + " (id " + currentUser.id + ").";
+    }
 
+    function saveUser(user) {
+        currentUser = user;
+        sessionStorage.setItem("bibliothequeUser", JSON.stringify(user));
+        showAccount();
+        loadLibrary();
+    }
+
+    async function readError(response) {
+        try {
+            const body = await response.json();
+            return body.error || ("Erreur HTTP " + response.status);
+        } catch (error) {
+            return "Erreur HTTP " + response.status;
+        }
+    }
+
+    function headers(json) {
+        const result = {};
+        if (json) {
+            result["Content-Type"] = "application/json";
+        }
+        if (currentUser) {
+            result["X-User-Id"] = String(currentUser.id);
+        }
+        return result;
+    }
+
+    function openLibraryId(book) {
+        if (!book.key) {
+            return "";
+        }
+        const parts = book.key.split("/");
+        return parts[parts.length - 1];
+    }
+
+    function coverUrl(coverId) {
+        return coverId ? "https://covers.openlibrary.org/b/id/" + coverId + "-M.jpg" : "";
+    }
+
+    function requireUser() {
+        if (currentUser) {
+            return true;
+        }
+        libraryMessage.textContent = "Inscris-toi ou indique un id avant d'utiliser ta bibliothèque.";
+        return false;
+    }
+
+    document.getElementById("registerForm").addEventListener("submit", async function (event) {
+        event.preventDefault();
+        const username = document.getElementById("username").value.trim();
+        const password = document.getElementById("password").value;
+        const response = await fetch("/api/users", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: username, password: password })
+        });
+        if (!response.ok) {
+            accountStatus.textContent = await readError(response);
+            return;
+        }
+        const user = await response.json();
+        saveUser(user);
+    });
+
+    document.getElementById("existingUserForm").addEventListener("submit", async function (event) {
+        event.preventDefault();
+        const id = Number(document.getElementById("existingUserId").value);
+        if (!id) {
+            accountStatus.textContent = "Indique un id utilisateur.";
+            return;
+        }
+        const response = await fetch("/api/users/" + id);
+        if (!response.ok) {
+            accountStatus.textContent = await readError(response);
+            return;
+        }
+        saveUser(await response.json());
+    });
+
+    document.getElementById("searchForm").addEventListener("submit", async function (event) {
+        event.preventDefault();
+        const query = document.getElementById("query").value.trim();
         results.replaceChildren();
         message.textContent = "Recherche en cours...";
 
         try {
-            const response = await fetch(
-                "/api/books/search?q=" + encodeURIComponent(query)
-            );
-
+            const response = await fetch("/api/books/search?q=" + encodeURIComponent(query));
             if (!response.ok) {
-                throw new Error("Erreur HTTP : " + response.status);
+                throw new Error(await readError(response));
             }
-
             const data = await response.json();
             const books = data.docs || [];
-
             if (books.length === 0) {
                 message.textContent = "Aucun livre trouvé.";
                 return;
             }
-
-            message.textContent = books.length + " livres trouvés.";
-
+            message.textContent = books.length + " livres trouvés sur Open Library.";
             books.forEach(function (book) {
-                const card = document.createElement("article");
-                card.className = "book";
-
-                const image = document.createElement("img");
-                image.alt = "Couverture de " + (book.title || "livre");
-                image.loading = "lazy";
-
-                if (book.cover_i) {
-                    image.src =
-                        "https://covers.openlibrary.org/b/id/" +
-                        book.cover_i + "-M.jpg";
-                } else {
-                    image.alt = "Couverture indisponible";
-                    image.hidden = true;
-                }
-
-                const title = document.createElement("h3");
-                title.textContent = book.title || "Titre inconnu";
-
-                const author = document.createElement("p");
-                author.textContent =
-                    "Auteur : " +
-                    (book.author_name?.slice(0, 2).join(", ") || "Inconnu");
-
-                const year = document.createElement("p");
-                year.textContent =
-                    "Première publication : " +
-                    (book.first_publish_year || "Inconnue");
-
-                card.append(image, title, author, year);
-
-                if (book.key) {
-                    const link = document.createElement("a");
-                    link.className = "details";
-                    link.href = "https://openlibrary.org" + book.key;
-                    link.target = "_blank";
-                    link.rel = "noopener noreferrer";
-                    link.textContent = "Voir le livre ↗";
-                    card.appendChild(link);
-                }
-
-                results.appendChild(card);
+                results.appendChild(searchCard(book));
             });
         } catch (error) {
-            message.textContent =
-                "Impossible de charger les livres. Vérifiez que le backend fonctionne.";
-            console.error(error);
+            message.textContent = error.message || "Impossible de charger les livres.";
         }
     });
 
-    form.requestSubmit();
+    function searchCard(book) {
+        const card = document.createElement("article");
+        card.className = "book";
+        const image = document.createElement("img");
+        image.alt = "Couverture de " + (book.title || "livre");
+        if (book.cover_i) {
+            image.src = coverUrl(book.cover_i);
+        } else {
+            image.hidden = true;
+        }
+        const title = document.createElement("h3");
+        title.textContent = book.title || "Titre inconnu";
+        const author = document.createElement("p");
+        const authorName = book.author_name && book.author_name.length ? book.author_name.slice(0, 2).join(", ") : "Inconnu";
+        author.textContent = "Auteur : " + authorName;
+        const year = document.createElement("p");
+        year.textContent = "Première publication : " + (book.first_publish_year || "Inconnue");
+        const add = document.createElement("button");
+        add.type = "button";
+        add.textContent = "Ajouter à ma bibliothèque";
+        add.addEventListener("click", function () {
+            addBook(book, authorName);
+        });
+        card.append(image, title, author, year, add);
+        if (book.key) {
+            const link = document.createElement("a");
+            link.className = "details";
+            link.href = "https://openlibrary.org" + book.key;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            link.textContent = "Voir sur Open Library";
+            card.appendChild(link);
+        }
+        return card;
+    }
+
+    async function addBook(book, authorName) {
+        if (!requireUser()) {
+            return;
+        }
+        const response = await fetch("/api/library", {
+            method: "POST",
+            headers: headers(true),
+            body: JSON.stringify({
+                openLibraryId: openLibraryId(book),
+                title: book.title || "Titre inconnu",
+                author: authorName === "Inconnu" ? null : authorName,
+                coverUrl: coverUrl(book.cover_i) || null,
+                publishYear: book.first_publish_year || null,
+                status: "A_LIRE"
+            })
+        });
+        if (!response.ok) {
+            message.textContent = await readError(response);
+            return;
+        }
+        message.textContent = "Livre ajouté à ta bibliothèque.";
+        loadLibrary();
+    }
+
+    document.getElementById("statusFilter").addEventListener("change", loadLibrary);
+    document.getElementById("sortFilter").addEventListener("change", loadLibrary);
+    document.getElementById("refreshLibrary").addEventListener("click", loadLibrary);
+
+    async function loadLibrary() {
+        library.replaceChildren();
+        if (!currentUser) {
+            libraryMessage.textContent = "Connecte un compte pour voir tes livres.";
+            return;
+        }
+        const params = new URLSearchParams();
+        const status = document.getElementById("statusFilter").value;
+        const sort = document.getElementById("sortFilter").value;
+        if (status) {
+            params.set("status", status);
+        }
+        if (sort) {
+            params.set("sort", sort);
+        }
+        const query = params.toString();
+        const response = await fetch("/api/library" + (query ? "?" + query : ""), { headers: headers(false) });
+        if (!response.ok) {
+            libraryMessage.textContent = await readError(response);
+            return;
+        }
+        const books = await response.json();
+        if (books.length === 0) {
+            libraryMessage.textContent = "Aucun livre dans cette sélection.";
+            return;
+        }
+        libraryMessage.textContent = books.length + " livre(s) enregistré(s).";
+        books.forEach(function (book) {
+            library.appendChild(libraryCard(book));
+        });
+    }
+
+    function libraryCard(book) {
+        const card = document.createElement("article");
+        card.className = "book";
+        const image = document.createElement("img");
+        image.alt = "Couverture de " + book.title;
+        if (book.coverUrl) {
+            image.src = book.coverUrl;
+        } else {
+            image.hidden = true;
+        }
+        const title = document.createElement("h3");
+        title.textContent = book.title;
+        const author = document.createElement("p");
+        author.textContent = "Auteur : " + (book.author || "Inconnu");
+        const year = document.createElement("p");
+        year.textContent = "Année : " + (book.publishYear || "Inconnue");
+
+        const status = document.createElement("select");
+        ["A_LIRE", "EN_COURS", "LU"].forEach(function (value) {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = STATUS_LABELS[value];
+            option.selected = book.status === value;
+            status.appendChild(option);
+        });
+
+        const rating = document.createElement("input");
+        rating.type = "number";
+        rating.min = "1";
+        rating.max = "5";
+        rating.placeholder = "Note de 1 à 5";
+        if (book.rating != null) {
+            rating.value = book.rating;
+        }
+
+        const comment = document.createElement("textarea");
+        comment.placeholder = "Commentaire";
+        comment.value = book.comment || "";
+
+        const save = document.createElement("button");
+        save.type = "button";
+        save.textContent = "Enregistrer";
+        save.addEventListener("click", function () {
+            updateBook(book.id, status.value, rating.value, comment.value);
+        });
+
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "danger";
+        remove.textContent = "Supprimer";
+        remove.addEventListener("click", function () {
+            deleteBook(book.id);
+        });
+
+        card.append(image, title, author, year, status, rating, comment, save, remove);
+        return card;
+    }
+
+    async function updateBook(id, status, rating, comment) {
+        const body = { status: status, comment: comment };
+        if (rating !== "") {
+            body.rating = Number(rating);
+        }
+        const response = await fetch("/api/library/" + id + "/status", {
+            method: "PATCH",
+            headers: headers(true),
+            body: JSON.stringify(body)
+        });
+        if (!response.ok) {
+            libraryMessage.textContent = await readError(response);
+            return;
+        }
+        libraryMessage.textContent = "Livre mis à jour.";
+        loadLibrary();
+    }
+
+    async function deleteBook(id) {
+        const response = await fetch("/api/library/" + id, {
+            method: "DELETE",
+            headers: headers(false)
+        });
+        if (!response.ok && response.status !== 204) {
+            libraryMessage.textContent = await readError(response);
+            return;
+        }
+        loadLibrary();
+    }
+
+    async function refreshCurrentUser() {
+        if (!currentUser) {
+            showAccount();
+            return;
+        }
+        const response = await fetch("/api/users/" + currentUser.id);
+        if (!response.ok) {
+            showAccount();
+            loadLibrary();
+            return;
+        }
+        saveUser(await response.json());
+    }
+
+    refreshCurrentUser();
+    document.getElementById("searchForm").requestSubmit();
 </script>
 </body>
 </html>
